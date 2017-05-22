@@ -26,3 +26,33 @@ Hipótesis nula
 Inferencia estadística
 Significancia estadística y clínica
 
+
+
+```{r}
+require(tidyverse)
+require(stringr)
+```
+Vamos a simular unos datos de caries (COPD) para dos poblaciones
+
+
+```{r}
+Valdivia <- rnorm(6000, mean = 4.4, sd = 4)
+hist(Valdivia)
+```
+```{r}
+Osorno <- rnorm(6000, mean = 2.2, sd = 2)
+hist(Osorno)
+```
+```{r}
+df <- data.frame(Valdivia, Osorno) #creo un dataframe con las variables
+rm(Valdivia, Osorno) #elimino y mantengo limpio todo
+head(df)
+```
+
+```{r}
+df %>% 
+        gather(Ciudad, value) %>% 
+        ggplot(aes(x = Ciudad, y = value)) +
+        geom_boxplot()
+```
+
