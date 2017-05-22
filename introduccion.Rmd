@@ -13,3 +13,16 @@ toc_float: true
 Datos > Información > Conocimiento (colocar legos)
 
 Flujo de trabajo: recolectar > limpiar > analizar > reportar
+
+## Términos claves
+Datos
+Variables
+Variables independientes y dependientes
+Población y muestra
+Parámetro y estadística
+Distribución (normal, binomial, Poisson)
+Hipótesis
+Hipótesis nula
+Inferencia estadística
+Significancia estadística y clínica
+
