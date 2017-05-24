@@ -32,27 +32,58 @@ Significancia estadística y clínica
 require(tidyverse)
 require(stringr)
 ```
-Vamos a simular unos datos de caries (COPD) para dos poblaciones
 
-
+# Descripción de datos
 ```{r}
-Valdivia <- rnorm(6000, mean = 4.4, sd = 4)
-hist(Valdivia)
+df <- read_csv("Controles2017.csv")
 ```
 ```{r}
-Osorno <- rnorm(6000, mean = 2.2, sd = 2)
-hist(Osorno)
+glimpse(df)
+```
+
+```{r}
+summary(df)
 ```
 ```{r}
-df <- data.frame(Valdivia, Osorno) #creo un dataframe con las variables
-rm(Valdivia, Osorno) #elimino y mantengo limpio todo
-head(df)
+hist(df$`3 abril 2017`)
+```
+```{r}
+df %>% 
+        ggplot(aes(x = Sexo)) + 
+        geom_bar()
 ```
 
 ```{r}
 df %>% 
-        gather(Ciudad, value) %>% 
-        ggplot(aes(x = Ciudad, y = value)) +
-        geom_boxplot()
+        ggplot(aes(x = Sexo )) + 
+        geom_bar() +
+        labs(title = "Distribución por Sexo", y = "Número") +
+        theme_minimal() 
+```
+
+```{r}
+df$Sexo <- str_replace(df$Sexo, "H", "Hombre")
+df$Sexo <- str_replace(df$Sexo, "M", "Mujer")
+```
+
+```{r}
+df %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) )
+```
+
+```{r}
+df %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
+        ggplot(aes(x = Prueba, y = Nota)) +
+        geom_jitter()
+
+```
+
+```{r}
+df %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
+        ggplot(aes(x = Prueba, y = Nota)) +
+        geom_count()
+
 ```
 
