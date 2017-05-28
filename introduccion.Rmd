@@ -27,33 +27,41 @@ Inferencia estadística
 Significancia estadística y clínica
 
 
+```{r}
+install.packages("tidyverse")
+```
+
 
 ```{r}
-require(tidyverse)
+require(dplyr)
+require(tidyr)
+require(ggplot2)
+require(readr)
 require(stringr)
+require(broom)
 ```
 
 # Descripción de datos
-```{r}
+```{r leo los datos}
 df <- read_csv("Controles2017.csv")
 ```
-```{r}
+```{r veo datos}
 glimpse(df)
 ```
 
-```{r}
+```{r summary}
 summary(df)
 ```
-```{r}
+```{r hist de 3 abr}
 hist(df$`3 abril 2017`)
 ```
-```{r}
+```{r veo por sexo}
 df %>% 
         ggplot(aes(x = Sexo)) + 
         geom_bar()
 ```
 
-```{r}
+```{r mejor por sexo}
 df %>% 
         ggplot(aes(x = Sexo )) + 
         geom_bar() +
@@ -61,17 +69,17 @@ df %>%
         theme_minimal() 
 ```
 
-```{r}
+```{r cambio h y m}
 df$Sexo <- str_replace(df$Sexo, "H", "Hombre")
 df$Sexo <- str_replace(df$Sexo, "M", "Mujer")
 ```
 
-```{r}
+```{r wide a long}
 df %>% 
         gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) )
 ```
 
-```{r}
+```{r jitter}
 df %>% 
         gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
         ggplot(aes(x = Prueba, y = Nota)) +
@@ -81,9 +89,108 @@ df %>%
 
 ```{r}
 df %>% 
+        ggplot(aes(y = ))
+```
+
+
+```{r jitter con color por sexo}
+df %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
+        ggplot(aes(x = Prueba, y = Nota, colour = Sexo)) +
+        geom_jitter()
+```
+
+```{r}
+df %>% 
         gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
         ggplot(aes(x = Prueba, y = Nota)) +
-        geom_count()
+        geom_boxplot() + 
+        geom_jitter()
+
+```
+Ahora vemos los datos en una tabla
+```{r}
+options(scipen=1, digits=3)
+df %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
+        group_by(Prueba) %>% 
+        summarise(Promedio = mean(Nota), sd = sd(Nota))
+```
+¿Cuál era el promedio de todas las pruebas?
+```{r}
+df %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
+        summarise(Promedio = mean(Nota))
+```
+
+¿Hay diferencias en los promedios entre pruebas?
+```{r}
+df %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
+        do(anova(lm(Nota ~ Prueba, data = .)))
+        
+```
+
+```{r}
+df2 <- df %>%
+        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) )
+```
+```{r}
+str(df2)
+```
+```{r}
+summary(df2)
+```
+```{r}
+df2$Sexo <- as.factor(df2$Sexo)
+df2$Prueba <- as.factor(df2$Prueba)
+```
+
+Ok, ahora resulta que tengo varias notas 1
+
+```{r}
+table(df2$Prueba, df2$Nota)
+```
+Elimino los 1
+```{r}
+df2 <- df2 %>% 
+        filter(Nota > 1)
+```
+
+```{r}
+df2 %>% 
+        ggplot(aes(x = Prueba, y = Nota)) +
+        geom_boxplot()
+```
+
+```{r}
+DiferenciaPorPrueba <- aov(df2$Nota ~ df2$Prueba, data = df2)
+```
+```{r}
+plot(DiferenciaPorPrueba)
+```
+```{r}
+summary(DiferenciaPorPrueba)
+```
+
+Lo bueno, es que como es un objeto, puedo extraer de el lo que mi interesa y colocarlo en un texto en el paper, por ejemplo: 
+
+La diferencia entre grupos fue significativa (p = `r summary(DiferenciaPorPrueba)[[1]][[1,"Pr(>F)"]]` ) por lo que existe diferencia entre grupos. 
+
+Ahora para ver cuál grupo tiene la diferencia, 
+
+```{r}
+TukeyHSD(DiferenciaPorPrueba)
+```
+```{r}
+ggplot(df2, 
+       aes(x = Prueba, y = Nota)) + 
+        geom_boxplot() +
+        geom_path(x=c(1,1,2,2),y=c(25,26,26,25)) + 
+        annotate("text",x=1.5,y=27,label="p=0.012")
+```
+
+```{r}
 
 ```
 
