@@ -41,7 +41,7 @@ library("broom")
 
 # Descripción de datos
 ```{r leo los datos}
-df <- read_csv("Controles2017.csv")
+df <- read_csv("2017_odon249.csv")
 ```
 ```{r veo datos}
 glimpse(df)
@@ -68,8 +68,8 @@ df %>%
 ```
 
 ```{r cambio h y m}
-df$Sexo <- str_replace(df$Sexo, "H", "Hombre")
-df$Sexo <- str_replace(df$Sexo, "M", "Mujer")
+df$Sexo <- str_replace(df$Sexo, "h", "Hombre")
+df$Sexo <- str_replace(df$Sexo, "m", "Mujer")
 ```
 
 ¿Cómo lo hago para hacer un gráfico por prueba?
@@ -80,29 +80,31 @@ head(df)
 
 ```{r wide a long 1}
 df %>% 
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante`) )
+        gather("Prueba", "Nota", -c(Sexo,`Nombre`) )
 ```
 
 ```{r jitter}
 df %>% 
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) )%>% 
+        select(-Logs) %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre` ) )%>% 
         ggplot(aes(x = Prueba, y = Nota)) +
         geom_jitter()
-
 ```
 
 
 
 ```{r jitter con color por sexo}
 df %>% 
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
+        select(-Logs) %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre` ) ) %>% 
         ggplot(aes(x = Prueba, y = Nota, colour = Sexo)) +
         geom_jitter()
 ```
 
 ```{r jitter con boxplot}
 df %>% 
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
+        select(-Logs) %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre` ) ) %>% 
         ggplot(aes(x = Prueba, y = Nota)) +
         geom_boxplot() + 
         geom_jitter()
@@ -113,28 +115,75 @@ Ahora vemos los datos en una tabla
 df <- df[complete.cases(df),] # dejo solo los que tienen datos completos
 options(scipen=1, digits=3)
 df %>% 
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante`, `1_teo` ) ) %>% 
+                select(-Logs) %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre`, `1a_acum`, `1er_sem` ) ) %>% 
         group_by(Prueba) %>% 
         summarise(Promedio = mean(Nota), sd = sd(Nota))
 ```
-¿Cuál era el promedio de todas las pruebas?
-```{r promedio gral}
+
+
+Correlación entre logs y seminarios
+
+```{r}
 df %>% 
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
-        summarise(Promedio = mean(Nota))
+        ggplot(aes(x = Logs, y = `1a_acum`)) +
+        geom_point() + 
+        geom_smooth()
 ```
+
+
+```{r}
+df %>% 
+        ggplot(aes(x = Logs, y = `1er_sem`)) +
+        geom_point() + 
+        geom_smooth()
+```
+
+
+
+
+```{r}
+str(df)
+```
+
+
+```{r mutate promPruebasChicas}
+df <-  mutate(df, PromPruebasEntrada = rowMeans(select(df, 3:10), na.rm = TRUE))
+```
+
+```{r}
+
+head(df)
+```
+
+
+
+```{r}
+df %>% 
+        gather("Prueba", "Nota", -c(Nombre, Sexo, Logs)) %>%
+        filter(Prueba == c("PromPruebasEntrada", "1er_sem", "1a_acum", "Logs" ) ) %>% 
+        ggplot(aes(x = Logs, y = Nota, colour = factor(Prueba) )) + 
+        geom_point() + 
+        geom_smooth()
+```
+
+-----------------------------------------------------------
+
+
+
 
 ¿Hay diferencias en los promedios entre pruebas?
 ```{r diferencias de promedios entre pruebas}
 df %>% 
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre` ) ) %>% 
         do(anova(lm(Nota ~ Prueba, data = .)))
         
 ```
 
 ```{r}
 df2 <- df %>%
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) )
+        select(-Logs) %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre` ) )
 ```
 ```{r}
 str(df2)
@@ -274,7 +323,7 @@ library("anonymizer")
 ```
 
 ```{r}
-df$`Nombre Estudiante 2` <- anonymize(df$`Nombre Estudiante`, .n_chars = 5L)
+df$`Nombre Estudiante 2` <- anonymize(df$`Nombre`, .n_chars = 5L)
 ?anonymize
 
 ```
@@ -328,7 +377,7 @@ df <- df %>%
 de wide a long
 ```{r wide a long 2}
 df2 <- df %>% 
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) )
+        gather("Prueba", "Nota", -c(Sexo,`Nombre` ) )
 # y elimino 1s
 df2 <- df2 %>% 
         filter(Nota > 1)
@@ -374,7 +423,7 @@ df3 <- df %>%
         select(-c(`1_teo`, `PromPruebasChicas`))
 head(df3)
 df3  %>%
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>% 
+        gather("Prueba", "Nota", -c(Sexo,`Nombre` ) ) %>% 
         group_by(Prueba) %>% 
         summarise(Promedio = mean(Nota, na.rm=TRUE)) %>% 
         ggplot(aes(x = Prueba, y = Promedio, group=1)) + 
@@ -392,7 +441,7 @@ table(df2$Prueba)
 ```{r}
 head(df)
 df3 %>%
-        gather("Prueba", "Nota", -c(Sexo,`Nombre Estudiante` ) ) %>%
+        gather("Prueba", "Nota", -c(Sexo,`Nombre` ) ) %>%
         ggplot(aes(x = Prueba, y = Nota, colour = Sexo)) + 
         geom_boxplot()
 ```
